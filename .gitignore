@@ -3,7 +3,7 @@ exif_data.txt
 
 #Testing data
 data/
-exif_test_images/
+
 
 #EXIF Removed Images
 clean_images/
