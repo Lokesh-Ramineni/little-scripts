@@ -1,0 +1,4 @@
+content="https://vtop.vitap.ac.in/vtop/content?"
+course_page="https://vtop.vitap.ac.in/vtop/academics/common/StudentCoursePage"
+get_course="https://vtop.vitap.ac.in/vtop/getCourseForCoursePage"
+slotId_forCourse="https://vtop.vitap.ac.in/vtop/getSlotIdForCoursePage"
