@@ -2,7 +2,7 @@
 exif_data.txt
 
 #Testing data
-data/
+/data/
 
 
 #EXIF Removed Images
@@ -10,3 +10,17 @@ clean_images/
 
 # IDE Configuration
 .idea
+
+__pycache__/
+*.py[cod]
+
+# Config
+Download/config/*
+!Download/config/.gitkeep
+
+#Data
+Download/data/*
+!Download/data/.gitkeep
+
+#Session
+Download/session.json
