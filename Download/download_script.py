@@ -6,8 +6,9 @@ from bs4 import BeautifulSoup
 from email.utils import formatdate
 from certi import cert_path
 
-from payloads import make_payload_1,make_payload_2
-from endpoints import content,get_course,slotId_forCourse
+from classes import scrape_faculty_slots
+from payloads import make_payload_1,make_payload_2,make_payload_3
+from endpoints import content,get_course,slotId_forCourse,timetable
 
 #Utlis
 sem_sub_id="XXXX"
@@ -44,7 +45,7 @@ payload_1=make_payload_1(csrf_token,sem_sub_id=sem_sub_id,authorized_id=authoriz
 
 course_page=session.post(get_course,data=payload_1,verify=str(cert_path))
 course_page.raise_for_status()
-print("course",course_page.status_code)
+print("course: ",course_page.status_code)
 
 soup=BeautifulSoup(course_page.text,"html.parser")
 
@@ -74,3 +75,67 @@ slotid.raise_for_status()
 print(f'Slot ID: {slotid.status_code}')
 with open("data/Slot_Id.html","w", encoding="utf-8") as f:
     f.write(slotid.text)
+
+payload_3=make_payload_3(csrf=csrf_token,sem_sub_id=sem_sub_id,authorized_id=authorized_id,timestamp=formatdate(timeval=None, localtime=False, usegmt=True))
+timetable_response=session.post(timetable,data=payload_3,verify=str(cert_path))
+timetable_response.raise_for_status()
+print(f'TimeTable :{timetable_response.status_code}')
+
+with open("data/timetable.html","w", encoding="utf-8") as f:
+    f.write(timetable_response.text)
+
+scrape_faculty_slots(timetable_response.text)
+
+with open("config/faculty_slots.json") as f:
+    classes=json.load(f)
+
+erpIds=[]
+
+for cls in classes:
+    class_id=cls["classnbr"]
+
+    payload_2=make_payload_2(csrf=csrf_token,class_id=class_id,sem_sub_id=sem_sub_id,authorized_id=authorized_id,timestamp=formatdate(timeval=None, localtime=False, usegmt=True))
+    slotid=session.post(slotId_forCourse,data=payload_2,verify=str(cert_path),timeout=20)
+    slotid.raise_for_status()
+
+    soup1=BeautifulSoup(slotid.text,"html.parser")
+    table=soup1.find("table")
+
+    if table is None:
+        print(f'Table not found for {class_id}')
+        continue
+
+    rows=table.find_all("tr")
+    found=False
+
+    for row in rows:
+        tds=row.find_all("td")
+        if len(tds) <= 7:
+            continue
+        row_class_id = tds[5].get_text(strip=True)
+
+        if row_class_id != class_id:
+            continue
+        
+        erp_text = tds[7].get_text(" ", strip=True)
+        erp_id = erp_text.split()[0] if erp_text else None
+        erpIds.append({
+            "classId":class_id,
+            "ErpId":erp_id
+        })
+        if erp_id:
+            print(f"Id found for class Id: {class_id}, ID: {erp_id}")
+        else:
+            print(f"ERP ID is empty for class Id: {class_id}, Faculty: {cls['facultyname']}")
+        found=True
+        break
+
+    if not found:
+        erpIds.append({
+            "classId":class_id,
+            "ErpId":None
+        })
+        print(f'Faculty not found with class Id: {class_id} {cls["facultyname"]}')
+
+with open("config/erpIds.json","w",encoding="utf-8") as file:
+    json.dump(erpIds,file,indent=4,ensure_ascii=False)
