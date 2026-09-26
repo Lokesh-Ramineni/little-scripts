@@ -1,8 +1,6 @@
 import json
 from pathlib import Path
-
 from bs4 import BeautifulSoup
-
 
 def get_course_type(ltpjc):
     parts = ltpjc.split()
