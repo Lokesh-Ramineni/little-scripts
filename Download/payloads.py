@@ -17,3 +17,11 @@ def make_payload_2(csrf, class_id,sem_sub_id, authorized_id,timestamp):
         "authorizedID": authorized_id,
         "x": timestamp
     }
+
+def make_payload_3(csrf,sem_sub_id, authorized_id,timestamp):
+    return {
+        "_csrf": csrf,
+        "semesterSubId": sem_sub_id,
+        "authorizedID": authorized_id,
+        "x": timestamp
+    }
