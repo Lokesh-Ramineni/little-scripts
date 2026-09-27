@@ -1,4 +1,5 @@
 import re
+import time
 import json
 import requests
 from pathlib import Path
@@ -7,6 +8,8 @@ from email.utils import formatdate
 from certi import cert_path
 
 from classes import scrape_faculty_slots
+from download_materials import download_material
+from download_data_details import download_data_call
 from payloads import make_payload_1,make_payload_2,make_payload_3
 from endpoints import content,get_course,slotId_forCourse,timetable
 
@@ -26,6 +29,7 @@ session = requests.Session()
 session.cookies.set('JSESSIONID', cookie["JSESSIONID"])
 
 #Content Page
+start=time.time()
 content_page=session.get(content,verify=str(cert_path))
 content_page.raise_for_status()
 
@@ -107,7 +111,7 @@ for cls in classes:
 
     rows=table.find_all("tr")
     found=False
-
+    
     for row in rows:
         tds=row.find_all("td")
         if len(tds) <= 7:
@@ -119,7 +123,10 @@ for cls in classes:
         
         erp_text = tds[7].get_text(" ", strip=True)
         erp_id = erp_text.split()[0] if erp_text else None
+        course=tds[3].get_text(strip=True)
+        type=tds[4].get_text(strip=True)
         erpIds.append({
+            "course":f'{course} {type}',
             "classId":class_id,
             "ErpId":erp_id
         })
@@ -132,6 +139,7 @@ for cls in classes:
 
     if not found:
         erpIds.append({
+            "course":"None",
             "classId":class_id,
             "ErpId":None
         })
@@ -139,3 +147,11 @@ for cls in classes:
 
 with open("config/erpIds.json","w",encoding="utf-8") as file:
     json.dump(erpIds,file,indent=4,ensure_ascii=False)
+
+download_data_call(session,csrf_token,sem_sub_id,authorized_id,cert_path)
+
+download_material(session,csrf_token,authorized_id,cert_path)
+
+end=time.time()
+total=end-start
+print(f'Time taken: {total:.4f} seconds')
