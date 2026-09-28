@@ -32,9 +32,9 @@ def strip_exif():
                     new_img.putdata(pixels)
 
                     new_img.save(f"{output_dir}/{image_file.name}")
-                    print(f"Success: Stripped metadata from '{image_file}' -> saved as 'clean_{image_file.name}'")
+                    print(f"Success: Stripped Metadata from '{image_file}' -> saved as 'clean_{image_file.name}'")
             except Exception as e:
-                print(f"Failed to strip metadata for '{image_file.name}, Error: {e}'")
+                print(f"Failed to strip Metadata for '{image_file.name}, Error: {e}'")
 
 
 if __name__ == "__main__":
