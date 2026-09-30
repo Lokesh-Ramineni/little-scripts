@@ -14,8 +14,8 @@ from payloads import make_payload_1,make_payload_2,make_payload_3
 from endpoints import content,get_course,slotId_forCourse,timetable
 
 #Utlis
-sem_sub_id="AP2026272"
-authorized_id="24MIC7146"
+sem_sub_id="XXXX"
+authorized_id="XXXX"
 
 #Paths
 Path("data").mkdir(exist_ok=True)
