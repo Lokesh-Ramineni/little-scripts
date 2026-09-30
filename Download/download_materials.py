@@ -1,5 +1,7 @@
 import re
 import json
+import zipfile
+from io import BytesIO
 from pathlib import Path
 from email.utils import formatdate
 
@@ -17,7 +19,6 @@ def download_pdf(session,url_text,payload, output_path,cert_path):
         verify=str(cert_path),
         timeout=30,
     )
-
     response.raise_for_status()
 
     with open(output_path, "wb") as f:
@@ -28,10 +29,37 @@ def download_pdf(session,url_text,payload, output_path,cert_path):
 def safe_path_name(name):
     return re.sub(r'[<>:"/\\|?*]', '_', name).strip()
 
+def get_extension(response):
 
+    data = response.content
 
+    if data.startswith(b"%PDF-"):
+        return ".pdf"
+
+    if data.startswith(b"PK"):
+        try:
+            with zipfile.ZipFile(BytesIO(data)) as z:
+
+                names = z.namelist()
+
+                if any(name.startswith("ppt/") for name in names):
+                    return ".pptx"
+
+                if any(name.startswith("word/") for name in names):
+                    return ".docx"
+
+                if any(name.startswith("xl/") for name in names):
+                    return ".xlsx"
+
+                print("ZIP but unknown Office type")
+                return ".zip"
+
+        except zipfile.BadZipFile:
+            print("PK header found, but ZIP is invalid")
+
+    print("DETECTED: UNKNOWN")
+    return ".bin"
 def download_material(session,csrf_token,authorized_id,cert_path):
-    
     folder=Path("Materials")
     folder.mkdir(parents=True, exist_ok=True)
     payload_5=make_payload_5(csrf=csrf_token,authorized_id=authorized_id ,timestamp=formatdate(timeval=None, localtime=False, usegmt=True))
@@ -51,4 +79,17 @@ def download_material(session,csrf_token,authorized_id,cert_path):
             url=material["Download"]
             if topic is None:
                 topic=url.split("/")[-1]
-            download_pdf(session=session,url_text=url,payload=payload_5,output_path=f'{course_folder}/{topic}.pdf',cert_path=cert_path)
+
+            response = download_pdf(
+                session=session,
+                url_text=url,
+                payload=payload_5,
+                output_path=f'{course_folder}/{topic}.tmp',
+                cert_path=cert_path
+            )
+
+            extension = get_extension(response)
+
+            Path(f'{course_folder}/{topic}.tmp').rename(
+                f'{course_folder}/{topic}{extension}'
+            )

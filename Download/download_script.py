@@ -14,8 +14,8 @@ from payloads import make_payload_1,make_payload_2,make_payload_3
 from endpoints import content,get_course,slotId_forCourse,timetable
 
 #Utlis
-sem_sub_id="XXXX"
-authorized_id="XXXX"
+sem_sub_id="AP2026272"
+authorized_id="24MIC7146"
 
 #Paths
 Path("data").mkdir(exist_ok=True)
@@ -43,6 +43,10 @@ if not csrf_match:
     raise RuntimeError("CSRF token not found")
 csrf_token = csrf_match.group(1)
 print(f'CSRF TOKEN: {csrf_token}')
+
+print("LOGIN URL:", content_page.url)
+print("LOGIN STATUS:", content_page.status_code)
+print("SESSION COOKIES:", session.cookies.get_dict())
 
 #Course Page
 payload_1=make_payload_1(csrf_token,sem_sub_id=sem_sub_id,authorized_id=authorized_id,timestamp=formatdate(timeval=None, localtime=False, usegmt=True))
