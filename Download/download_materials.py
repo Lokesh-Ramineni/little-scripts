@@ -8,9 +8,6 @@ from email.utils import formatdate
 from payloads import make_payload_5
 from endpoints import base_url
 
-with open("config/download_data.json","r") as f:
-    download_materials=json.load(f)
-
 def download_pdf(session,url_text,payload, output_path,cert_path):
 
     response = session.get(
@@ -59,7 +56,29 @@ def get_extension(response):
 
     print("DETECTED: UNKNOWN")
     return ".bin"
+
+def unique_path(path):
+    path = Path(path)
+
+    if not path.exists():
+        return path
+
+    counter = 2
+
+    while True:
+        new_path = path.with_name(
+            f"{path.stem} ({counter}){path.suffix}"
+        )
+
+        if not new_path.exists():
+            return new_path
+
+        counter += 1
+
 def download_material(session,csrf_token,authorized_id,cert_path):
+    with open("config/download_data.json","r") as f:
+        download_materials=json.load(f)
+
     folder=Path("Materials")
     folder.mkdir(parents=True, exist_ok=True)
     payload_5=make_payload_5(csrf=csrf_token,authorized_id=authorized_id ,timestamp=formatdate(timeval=None, localtime=False, usegmt=True))
@@ -90,6 +109,8 @@ def download_material(session,csrf_token,authorized_id,cert_path):
 
             extension = get_extension(response)
 
-            Path(f'{course_folder}/{topic}.tmp').rename(
-                f'{course_folder}/{topic}{extension}'
+            target_path = unique_path(
+                Path(f'{course_folder}/{topic}{extension}')
             )
+
+            Path(f'{course_folder}/{topic}.tmp').rename(target_path)
