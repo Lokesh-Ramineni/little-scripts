@@ -24,3 +24,7 @@ Download/data/*
 
 #Session
 Download/session.json
+
+#Materials
+Download/Materials/*
+!Download/Materials/.gitkeep
